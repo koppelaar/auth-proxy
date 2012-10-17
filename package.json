@@ -1,0 +1,12 @@
+{
+  "name": "auth-proxy",
+  "version": "0.0.1",
+  "author": {
+    "name": "Sander Koppelaar",
+    "email": "sander@micawber.nl"
+  },
+  "main": "./auth-proxy.js",
+  "engines": {
+    "node": "*"
+  }
+}
