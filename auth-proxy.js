@@ -18,6 +18,12 @@ exports.init = function (fnEnsure) {
     return options;
   };
 
+  var forward = function (options) {
+    return function (req, res, next) {
+      res.send('hoi');
+    };  
+  };
+
   var validate = function (options) {
     return function (req, res, next) {
     
@@ -72,6 +78,8 @@ exports.init = function (fnEnsure) {
     copyCookiesFromServer: copyCookiesFromServer,
 
     copyCookiesFromClient: copyCookiesFromClient,
+
+    forward: forward,
 
     validate: validate,
 
