@@ -17,7 +17,7 @@ exports.init = function (fnEnsure) {
     }
     return options;
   };
-
+  
   var forward = function (api, forwarding) {
 
     // Set basic options for url forwarding
@@ -41,11 +41,28 @@ exports.init = function (fnEnsure) {
       
       // Create a new API request
       var apiReq = http.request(opt, function(apiRes) {
-        console.log('----------');
-        console.log('Sent api request to '+reqPath);
-        console.log(options);
-      });
 
+        // Copy API result headers to our frontend result
+        res.headers = apiRes.headers;
+
+        // Copy cookies from API back to the frontend request
+        copyCookiesFromServer(apiRes, res);
+
+        // Retrieve data from the API
+        var apiResData = ''
+        apiRes.on('data', function (chunk) {
+          apiResData += chunk;
+        });
+        apiRes.on('end', function () {
+          res.send(apiResData);
+          next();
+        });
+
+      }).on('error', function(err) {
+        //console.log(err);
+        next();
+      });
+      
       apiReq.end(); 
     };
   };
