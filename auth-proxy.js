@@ -29,8 +29,6 @@ exports.init = function (fnEnsure) {
     
     return function (req, res, next) {
       
-      console.log('Cut off '+prefixLength);
-      
       // Set request specific options
       var reqPath = req.url.substring(prefixLength);
       options.path = reqPath;
@@ -43,11 +41,16 @@ exports.init = function (fnEnsure) {
       var apiReq = http.request(opt, function(apiRes) {
 
         // Copy API result headers to our frontend result
-        res.headers = apiRes.headers;
-
-        // Copy cookies from API back to the frontend request
-        copyCookiesFromServer(apiRes, res);
-
+        // Don't copy the date header as it will be set here
+        // This includes encoding, status code and cookies
+        for (var apiResHeader in apiRes.headers) {
+         (function() {
+          if (apiResHeader.toLowerCase() != 'date') {
+            res.header(apiResHeader, apiRes.headers[apiResHeader]);
+          }
+         })();
+        }
+        
         // Retrieve data from the API
         var apiResData = ''
         apiRes.on('data', function (chunk) {
@@ -55,7 +58,8 @@ exports.init = function (fnEnsure) {
         });
         apiRes.on('end', function () {
           res.send(apiResData);
-          next();
+          res.send('apiResData');
+          //next();
         });
 
       }).on('error', function(err) {
