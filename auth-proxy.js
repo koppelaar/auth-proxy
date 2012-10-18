@@ -18,10 +18,36 @@ exports.init = function (fnEnsure) {
     return options;
   };
 
-  var forward = function (options) {
+  var forward = function (api, forwarding) {
+
+    // Set basic options for url forwarding
+    var options = {
+      host: api.host,
+      port: api.port,
+    },
+    prefixLength = forwarding.localPrefix.length;
+    
     return function (req, res, next) {
-      res.send('hoi');
-    };  
+      
+      console.log('Cut off '+prefixLength);
+      
+      // Set request specific options
+      var reqPath = req.url.substring(prefixLength);
+      options.path = reqPath;
+      options.method = req.method;
+
+      // Copy options to opt and place cookies from frontend request in opt variable
+      var opt = copyCookiesFromClient(req, options);
+      
+      // Create a new API request
+      var apiReq = http.request(opt, function(apiRes) {
+        console.log('----------');
+        console.log('Sent api request to '+reqPath);
+        console.log(options);
+      });
+
+      apiReq.end(); 
+    };
   };
 
   var validate = function (options) {
