@@ -17,6 +17,59 @@ exports.init = function (fnEnsure) {
     }
     return options;
   };
+  
+  var forward = function (api, forwarding) {
+
+    // Set basic options for url forwarding
+    var options = {
+      host: api.host,
+      port: api.port,
+    },
+    prefixLength = forwarding.localPrefix.length;
+    
+    return function (req, res, next) {
+      
+      // Set request specific options
+      var reqPath = req.url.substring(prefixLength);
+      options.path = reqPath;
+      options.method = req.method;
+
+      // Copy options to opt and place cookies from frontend request in opt variable
+      var opt = copyCookiesFromClient(req, options);
+      
+      // Create a new API request
+      var apiReq = http.request(opt, function(apiRes) {
+
+        // Copy API result headers to our frontend result
+        // Don't copy the date header as it will be set here
+        // This includes encoding, status code and cookies
+        for (var apiResHeader in apiRes.headers) {
+         (function() {
+          if (apiResHeader.toLowerCase() != 'date') {
+            res.header(apiResHeader, apiRes.headers[apiResHeader]);
+          }
+         })();
+        }
+        
+        // Retrieve data from the API
+        var apiResData = ''
+        apiRes.on('data', function (chunk) {
+          apiResData += chunk;
+        });
+        apiRes.on('end', function () {
+          res.send(apiResData);
+          res.send('apiResData');
+          //next();
+        });
+
+      }).on('error', function(err) {
+        //console.log(err);
+        next();
+      });
+      
+      apiReq.end(); 
+    };
+  };
 
   var validate = function (options) {
     return function (req, res, next) {
@@ -72,6 +125,8 @@ exports.init = function (fnEnsure) {
     copyCookiesFromServer: copyCookiesFromServer,
 
     copyCookiesFromClient: copyCookiesFromClient,
+
+    forward: forward,
 
     validate: validate,
 
